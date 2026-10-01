@@ -346,9 +346,14 @@ async def finish_test(test_id: int):
     with open(filename, "w", encoding="utf-8") as f:
         f.write(results_text)
     
+    # YANGILIK: Matn ko'rinishida to'g'ridan-to'g'ri kanal va adminga yuborish
     try:
-        await bot.send_document(ADMIN_ID, FSInputFile(filename), caption=f"Test #{test_id} natijalari:")
-        await bot.send_document("@Toxirov_Office_Matematika", FSInputFile(filename), caption=f"📊 Mock Test #{test_id} umumiy natijalari")
+        if len(results_text) < 4000:
+            await bot.send_message(ADMIN_ID, f"📊 Natijalar:\n\n{results_text}")
+            await bot.send_message("@Toxirov_Office_Matematika", f"📊 Mock Test #{test_id} natijalari:\n\n{results_text}")
+            
+        await bot.send_document(ADMIN_ID, FSInputFile(filename), caption=f"Test #{test_id} fayl shaklidagi natijalari:")
+        await bot.send_document("@Toxirov_Office_Matematika", FSInputFile(filename), caption=f"📊 Mock Test #{test_id} fayl shaklidagi natijalari")
     except Exception as e:
         await bot.send_message(ADMIN_ID, f"⚠️ Natijalarni kanalga yuborishda xatolik yuz berdi. Bot kanalda admin ekanligini tekshiring! Xato: {e}")
     
@@ -413,11 +418,13 @@ def calculate_rasch_model(test_id: int):
         final_scores[uid] = {"score": percent_score, "level": level_name}
 
     sorted_users = sorted(final_scores.items(), key=lambda item: item[1]['score'], reverse=True)
-    report = f"Mock Test #{test_id} Natijalari\nID | Ism Familiya | Ball | Daraja\n" + ("-" * 40) + "\n"
+    
+    # YANGILIK: \n o'rniga \r\n (Bloknot uchun qator tashlash qoidasi)
+    report = f"Mock Test #{test_id} Natijalari\r\nID | Ism Familiya | Ball | Daraja\r\n" + ("-" * 40) + "\r\n"
     
     for uid, data in sorted_users:
         name = users_db.get(uid, "Noma'lum")
-        report += f"{uid} | {name} | {data['score']:.1f} | {data['level']}\n"
+        report += f"{uid} | {name} | {data['score']:.1f} | {data['level']}\r\n"
         
     return report, final_scores
 
